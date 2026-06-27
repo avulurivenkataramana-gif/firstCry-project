@@ -1,0 +1,13 @@
+{
+  "name": "curriculum-planner-workspace",
+  "version": "1.0.0",
+  "description": "Root workspace for Curriculum Planner Dashboard",
+  "scripts": {
+    "backend": "npm start --prefix backend",
+    "backend-dev": "npm run dev --prefix backend",
+    "frontend": "npm run dev --prefix frontend",
+    "install-backend": "npm install --prefix backend",
+    "install-frontend": "npm install --prefix frontend",
+    "install-all": "npm run install-backend && npm run install-frontend"
+  }
+}
