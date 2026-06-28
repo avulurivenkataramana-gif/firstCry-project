@@ -92,6 +92,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// URL Rewrite Middleware: If a request doesn't start with /api, automatically prefix /api
+app.use((req, res, next) => {
+  if (!req.url.startsWith('/api') && req.url !== '/' && !req.url.includes('.')) {
+    req.url = `/api${req.url}`;
+  }
+  next();
+});
+
 // ── Mount API Routes ─────────────────────────────────────────────────────────
 
 app.use('/api/auth', authLimiter, authRoutes);

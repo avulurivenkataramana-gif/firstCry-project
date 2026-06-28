@@ -35,7 +35,7 @@ const fetchClient = async (endpoint, options = {}) => {
     const text = await response.text();
     console.error('Received non-JSON response:', text);
     throw new Error(
-      `Received non-JSON response from server (Status: ${response.status}). This usually means the API URL is misconfigured, the server crashed, or the static server redirected the request to index.html.`
+      `Failed to connect to the backend (Status: ${response.status}). The server returned HTML instead of data. Please verify that VITE_API_URL environment variable is set to your backend URL (e.g. https://your-backend.onrender.com/api) on Render. Current API URL is: ${API_URL}`
     );
   }
 
