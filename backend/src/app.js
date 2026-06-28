@@ -50,9 +50,17 @@ app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (e.g. curl, Postman, mobile apps)
     if (!origin) return callback(null, true);
+    
+    // Check if origin is explicitly allowed
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
+    
+    // Dynamic fallback for easier deployment on Render/Vercel
+    if (origin.endsWith('.onrender.com') || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
