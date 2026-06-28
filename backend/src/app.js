@@ -135,6 +135,22 @@ const PORT = process.env.PORT || 5002;
 // Seed Real MongoDB Helper
 const seedDatabase = async () => {
   try {
+    // Dynamic migration: Ensure all existing seeded users are APPROVED so they can log in immediately
+    await User.updateMany(
+      { 
+        email: { 
+          $in: [
+            'coordinator@intellitots.com', 
+            'teacher@intellitots.com', 
+            'sneha@intellitots.com', 
+            'parent@intellitots.com', 
+            'avulurivenkataramana@gmail.com'
+          ] 
+        } 
+      },
+      { $set: { accountStatus: 'APPROVED' } }
+    );
+
     const userCount = await User.countDocuments({});
     if (userCount > 0) {
       console.log('Database already seeded. Skipping seed.');
@@ -166,7 +182,8 @@ const seedDatabase = async () => {
         phoneNumber: u.phoneNumber,
         classroom: u.classroom,
         childName: u.childName || '',
-        performanceScore: u.performanceScore
+        performanceScore: u.performanceScore,
+        accountStatus: 'APPROVED'
       });
 
       await userDoc.save();
