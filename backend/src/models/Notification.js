@@ -32,7 +32,8 @@ const NotificationSchema = new mongoose.Schema({
       'meeting',
       'report',
       'announcement',
-      'parent_message'
+      'parent_message',
+      'material_request'
     ],
     required: true,
   },
