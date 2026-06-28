@@ -54,7 +54,8 @@ exports.createUser = async (req, res) => {
         role,
         classroom: classroom || '',
         childName: childName || '',
-        phoneNumber: phoneNumber || ''
+        phoneNumber: phoneNumber || '',
+        accountStatus: 'APPROVED'
       });
     } else {
       newUser = await User.create({
@@ -64,7 +65,8 @@ exports.createUser = async (req, res) => {
         role,
         classroom: classroom || '',
         childName: childName || '',
-        phoneNumber: phoneNumber || ''
+        phoneNumber: phoneNumber || '',
+        accountStatus: 'APPROVED'
       });
     }
 

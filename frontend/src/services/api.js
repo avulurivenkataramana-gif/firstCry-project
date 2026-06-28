@@ -26,7 +26,19 @@ const fetchClient = async (endpoint, options = {}) => {
     }
   }
 
-  const data = await response.json();
+  const contentType = response.headers.get('content-type');
+  let data;
+
+  if (contentType && contentType.includes('application/json')) {
+    data = await response.json();
+  } else {
+    const text = await response.text();
+    console.error('Received non-JSON response:', text);
+    throw new Error(
+      `Received non-JSON response from server (Status: ${response.status}). This usually means the API URL is misconfigured, the server crashed, or the static server redirected the request to index.html.`
+    );
+  }
+
   if (!response.ok) {
     throw new Error(data.message || 'Something went wrong');
   }

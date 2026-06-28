@@ -437,7 +437,8 @@ exports.createStudent = async (req, res) => {
           role: 'parent',
           classroom: classroom,
           childName: name,
-          phoneNumber: contactNumber
+          phoneNumber: contactNumber,
+          accountStatus: 'APPROVED'
         });
       } else {
         parentUser.childName = name;

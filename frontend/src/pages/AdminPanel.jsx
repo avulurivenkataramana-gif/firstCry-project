@@ -97,14 +97,29 @@ const AdminPanel = () => {
       </div>
     );
   }
+  const [deletedLogIds, setDeletedLogIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem('deleted_audit_log_ids');
+      return saved ? JSON.parse(saved) : [];
+    } catch (_) {
+      return [];
+    }
+  });
   const [auditLogs, setAuditLogs] = useState([]);
   const [loadingAudit, setLoadingAudit] = useState(false);
 
   const handleDeleteLog = (logId) => {
+    const updated = [...deletedLogIds, logId];
+    setDeletedLogIds(updated);
+    localStorage.setItem('deleted_audit_log_ids', JSON.stringify(updated));
     setAuditLogs(prev => prev.filter(l => l.id !== logId));
   };
 
   const handleClearAllLogs = () => {
+    const allIds = auditLogs.map(l => l.id);
+    const updated = [...deletedLogIds, ...allIds];
+    setDeletedLogIds(updated);
+    localStorage.setItem('deleted_audit_log_ids', JSON.stringify(updated));
     setAuditLogs([]);
   };
 
@@ -193,7 +208,16 @@ const AdminPanel = () => {
       }
 
       logs.sort((a, b) => new Date(b.time) - new Date(a.time));
-      setAuditLogs(logs);
+      
+      // Filter out deleted logs using the persistent list from localStorage
+      let currentDeletedIds = [];
+      try {
+        const saved = localStorage.getItem('deleted_audit_log_ids');
+        currentDeletedIds = saved ? JSON.parse(saved) : [];
+      } catch (_) {}
+      
+      const filteredLogs = logs.filter(l => !currentDeletedIds.includes(l.id));
+      setAuditLogs(filteredLogs);
     } catch (err) {
       console.error('Failed to build audit logs:', err.message);
     } finally {

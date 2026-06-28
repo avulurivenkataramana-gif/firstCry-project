@@ -1,6 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
 const { connectDB, checkIsMock } = require('./config/db');
 const mongoose = require('mongoose');
 
@@ -30,12 +33,60 @@ const mockDb = require('./services/mockDb');
 
 const app = express();
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
+// ── Security Middlewares ─────────────────────────────────────────────────────
 
-// Mount API Routes
-app.use('/api/auth', authRoutes);
+// Helmet: Set secure HTTP headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false, // Disable CSP for API-only server
+}));
+
+// CORS: Restrict to allowed origins
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (e.g. curl, Postman, mobile apps)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
+
+// Body parser
+app.use(express.json({ limit: '10mb' }));
+
+// Mongo Sanitize: Prevent NoSQL injection
+app.use(mongoSanitize());
+
+// Rate limiter for auth routes (prevent brute force)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // 30 requests per window per IP
+  message: { success: false, message: 'Too many attempts. Please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ── Health Check ─────────────────────────────────────────────────────────────
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: 'OK',
+    database: checkIsMock() ? 'mock' : 'mongodb',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// ── Mount API Routes ─────────────────────────────────────────────────────────
+
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/curriculum', curriculumRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/activities', activityRoutes);
@@ -59,7 +110,7 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
     success: false,
-    message: err.message || 'Internal Server Error'
+    message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message
   });
 });
 
@@ -73,17 +124,17 @@ const seedDatabase = async () => {
       console.log('Database already seeded. Skipping seed.');
       return;
     }
-    
+
     console.log('Database is empty. Starting seeding process...');
-    
+
     // 1. Seed Users (need to map string IDs to ObjectIds)
     const idMap = {};
     const seededUsers = [];
-    
+
     for (const u of mockDb.mockState.users) {
       const newId = new mongoose.Types.ObjectId();
       idMap[u._id] = newId;
-      
+
       // Assign correct plaintext password per role — schema pre-save will hash it
       let plainPassword = 'Teach@123';
       if (u.role === 'admin') plainPassword = 'venky123';
@@ -101,7 +152,7 @@ const seedDatabase = async () => {
         childName: u.childName || '',
         performanceScore: u.performanceScore
       });
-      
+
       await userDoc.save();
       seededUsers.push(userDoc);
     }
@@ -112,7 +163,7 @@ const seedDatabase = async () => {
     for (const a of mockDb.mockState.activities) {
       const newId = new mongoose.Types.ObjectId();
       idMap[a._id] = newId;
-      
+
       const actDoc = await Activity.create({
         _id: newId,
         name: a.name,
@@ -148,7 +199,7 @@ const seedDatabase = async () => {
     for (const c of mockDb.mockState.curriculumPlans) {
       const newId = new mongoose.Types.ObjectId();
       idMap[c._id] = newId;
-      
+
       const currDoc = await CurriculumPlan.create({
         _id: newId,
         title: c.title,
@@ -249,12 +300,12 @@ const seedDatabase = async () => {
 const startServer = async () => {
   // Connect to Database
   await connectDB();
-  
+
   // Seed if MongoDB is active
   if (!checkIsMock()) {
     await seedDatabase();
   }
-  
+
   app.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
   });

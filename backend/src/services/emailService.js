@@ -20,7 +20,7 @@ const initTransporter = () => {
 
   try {
     const nodemailer = require('nodemailer');
-    transporter = nodemailer.createTransporter({
+    transporter = nodemailer.createTransport({
       host: SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: process.env.SMTP_SECURE === 'true',

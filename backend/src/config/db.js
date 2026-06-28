@@ -16,6 +16,10 @@ const connectDB = async () => {
     isMockDB = false;
   } catch (error) {
     console.error('MongoDB Connection Failed:', error.message);
+    if (process.env.NODE_ENV === 'production') {
+      console.error('FATAL: MongoDB connection failed in production mode. Exiting process...');
+      process.exit(1);
+    }
     console.log('WARNING: Falling back to in-memory Mock Database for temporary data persistence.');
     isMockDB = true;
   }

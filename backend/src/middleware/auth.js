@@ -3,7 +3,12 @@ const { checkIsMock } = require('../config/db');
 const User = require('../models/User');
 const mockDb = require('../services/mockDb');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'curriculum_planner_secret_key_12345';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set. Server cannot start securely.');
+  process.exit(1);
+}
 
 // Protect routes - Verify JWT
 const protect = async (req, res, next) => {

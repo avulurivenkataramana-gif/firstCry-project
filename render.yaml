@@ -1,0 +1,37 @@
+services:
+  # ─── Backend Web Service ──────────────────────────────────────────────────
+  - type: web
+    name: firstcry-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false # Set this to your MongoDB Atlas connection string on Render
+      - key: CORS_ORIGIN
+        sync: false # Set this to your deployed frontend URL on Render
+
+  # ─── Frontend Static Site ─────────────────────────────────────────────────
+  - type: web
+    name: firstcry-frontend
+    env: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    routes:
+      # Rewrite rule to route all requests back to index.html (SPA fallback)
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false # Set this to your backend service URL + /api (e.g. https://firstcry-backend.onrender.com/api)

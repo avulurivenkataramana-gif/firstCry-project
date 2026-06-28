@@ -1086,6 +1086,7 @@ module.exports = {
         childName: data.name,
         classroom: data.classroom,
         phoneNumber: data.contactNumber,
+        accountStatus: 'APPROVED',
         createdAt: new Date()
       };
       mockState.users.push(parentData);
